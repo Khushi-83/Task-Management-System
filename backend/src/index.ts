@@ -1,19 +1,22 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
+import authRoutes from './api/auth';
+import taskRoutes from './api/tasks';
 
 dotenv.config();
 
 const app = express();
-export const prisma = new PrismaClient();
 
 app.use(cors());
 app.use(express.json());
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ status: 'ok', db: 'pg' });
 });
+
+app.use('/api/auth', authRoutes);
+app.use('/api/tasks', taskRoutes);
 
 const PORT = process.env.PORT || 5000;
 
