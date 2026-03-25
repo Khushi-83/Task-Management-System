@@ -1,10 +1,11 @@
 import api from '../lib/api';
 
 export interface TaskData {
+  id?: string;
   title: string;
   description?: string;
-  priority?: string;
-  status?: string;
+  priority?: 'Low' | 'Medium' | 'High';
+  status?: 'Pending' | 'Completed' | 'Archived';
   due_date?: string | null;
 }
 

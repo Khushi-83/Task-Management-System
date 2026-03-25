@@ -65,14 +65,14 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const todoTasks = tasks.filter(t => t.status === 'TODO');
-  const inProgressTasks = tasks.filter(t => t.status === 'IN_PROGRESS');
-  const doneTasks = tasks.filter(t => t.status === 'DONE');
+  const pendingTasks = tasks.filter(t => t.status === 'Pending');
+  const completedTasks = tasks.filter(t => t.status === 'Completed');
+  const archivedTasks = tasks.filter(t => t.status === 'Archived');
 
   const chartData = [
-    { name: 'To Do', value: todoTasks.length, color: '#94a3b8' },
-    { name: 'In Progress', value: inProgressTasks.length, color: '#8b5cf6' },
-    { name: 'Done', value: doneTasks.length, color: '#10b981' },
+    { name: 'Pending', value: pendingTasks.length, color: '#94a3b8' },
+    { name: 'Completed', value: completedTasks.length, color: '#10b981' },
+    { name: 'Archived', value: archivedTasks.length, color: '#f59e0b' },
   ].filter(d => d.value > 0);
 
   if (isLoading) {
@@ -101,13 +101,13 @@ export const Dashboard: React.FC = () => {
             </div>
             <div className="w-px h-16 bg-slate-200/60 hidden md:block"></div>
             <div className="text-center transition-transform hover:scale-105 duration-300">
-              <div className="text-5xl font-extrabold text-emerald-500 drop-shadow-sm">{doneTasks.length}</div>
+              <div className="text-5xl font-extrabold text-emerald-500 drop-shadow-sm">{completedTasks.length}</div>
               <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-2">Completed</div>
             </div>
             <div className="w-px h-16 bg-slate-200/60 hidden md:block"></div>
             <div className="text-center transition-transform hover:scale-105 duration-300">
-              <div className="text-5xl font-extrabold text-primary-500 drop-shadow-sm">{inProgressTasks.length}</div>
-              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-2">In Progress</div>
+              <div className="text-5xl font-extrabold text-amber-500 drop-shadow-sm">{archivedTasks.length}</div>
+              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-2">Archived</div>
             </div>
           </div>
         </div>
@@ -146,14 +146,14 @@ export const Dashboard: React.FC = () => {
 
       {/* Kanban Board */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-        {/* TO DO Column */}
+        {/* PENDING Column */}
         <div className="task-column rounded-3xl p-5 shadow-sm border-t-4 border-t-slate-300">
           <h3 className="font-extrabold text-slate-800 mb-5 flex items-center justify-between uppercase tracking-wide text-sm">
-            To Do <span className="bg-white/80 shadow-sm border border-slate-200/60 text-slate-700 text-xs py-0.5 px-3 rounded-full">{todoTasks.length}</span>
+            Pending <span className="bg-white/80 shadow-sm border border-slate-200/60 text-slate-700 text-xs py-0.5 px-3 rounded-full">{pendingTasks.length}</span>
           </h3>
           <div className="space-y-3">
-            {todoTasks.map(task => <TaskCard key={task.id} task={task} onEdit={handleOpenEditModal} onDelete={handleDeleteTask} />)}
-            {todoTasks.length === 0 && (
+            {pendingTasks.map(task => <TaskCard key={task.id} task={task} onEdit={handleOpenEditModal} onDelete={handleDeleteTask} />)}
+            {pendingTasks.length === 0 && (
               <button 
                 onClick={handleOpenCreateModal}
                 className="w-full py-8 flex flex-col items-center justify-center border-2 border-dashed border-slate-300/70 rounded-2xl text-slate-400 hover:text-primary-600 hover:border-primary-300 hover:bg-white/60 transition-all group shadow-sm"
@@ -170,25 +170,25 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* IN PROGRESS Column */}
-        <div className="task-column rounded-3xl p-5 shadow-sm border-t-4 border-t-indigo-400">
-          <h3 className="font-extrabold text-indigo-900 mb-5 flex items-center justify-between uppercase tracking-wide text-sm">
-            In Progress <span className="bg-white/80 shadow-sm border border-indigo-200/60 text-indigo-700 text-xs py-0.5 px-3 rounded-full">{inProgressTasks.length}</span>
+        {/* COMPLETED Column */}
+        <div className="task-column rounded-3xl p-5 shadow-sm border-t-4 border-t-emerald-400">
+          <h3 className="font-extrabold text-emerald-900 mb-5 flex items-center justify-between uppercase tracking-wide text-sm">
+            Completed <span className="bg-white/80 shadow-sm border border-emerald-200/60 text-emerald-700 text-xs py-0.5 px-3 rounded-full">{completedTasks.length}</span>
           </h3>
           <div className="space-y-3">
-            {inProgressTasks.map(task => <TaskCard key={task.id} task={task} onEdit={handleOpenEditModal} onDelete={handleDeleteTask} />)}
-            {inProgressTasks.length === 0 && <p className="text-sm text-blue-300 text-center py-6 border-2 border-dashed border-blue-100 rounded-xl">No tasks here</p>}
+            {completedTasks.map(task => <TaskCard key={task.id} task={task} onEdit={handleOpenEditModal} onDelete={handleDeleteTask} />)}
+            {completedTasks.length === 0 && <p className="text-sm text-green-300 text-center py-6 border-2 border-dashed border-green-100 rounded-xl">No tasks here</p>}
           </div>
         </div>
 
-        {/* DONE Column */}
-        <div className="task-column rounded-3xl p-5 shadow-sm border-t-4 border-t-emerald-400">
-          <h3 className="font-extrabold text-emerald-900 mb-5 flex items-center justify-between uppercase tracking-wide text-sm">
-            Done <span className="bg-white/80 shadow-sm border border-emerald-200/60 text-emerald-700 text-xs py-0.5 px-3 rounded-full">{doneTasks.length}</span>
+        {/* ARCHIVED Column */}
+        <div className="task-column rounded-3xl p-5 shadow-sm border-t-4 border-t-amber-400 opacity-80 mix-blend-multiply">
+          <h3 className="font-extrabold text-amber-900 mb-5 flex items-center justify-between uppercase tracking-wide text-sm">
+            Archived <span className="bg-white/80 shadow-sm border border-amber-200/60 text-amber-700 text-xs py-0.5 px-3 rounded-full">{archivedTasks.length}</span>
           </h3>
           <div className="space-y-3">
-            {doneTasks.map(task => <TaskCard key={task.id} task={task} onEdit={handleOpenEditModal} onDelete={handleDeleteTask} />)}
-            {doneTasks.length === 0 && <p className="text-sm text-green-300 text-center py-6 border-2 border-dashed border-green-100 rounded-xl">No tasks here</p>}
+            {archivedTasks.map(task => <TaskCard key={task.id} task={task} onEdit={handleOpenEditModal} onDelete={handleDeleteTask} />)}
+            {archivedTasks.length === 0 && <p className="text-sm text-orange-300 text-center py-6 border-2 border-dashed border-orange-100 rounded-xl">No tasks here</p>}
           </div>
         </div>
       </div>

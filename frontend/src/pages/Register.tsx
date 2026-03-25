@@ -21,7 +21,7 @@ export const Register: React.FC = () => {
     
     try {
       const response = await api.post('/auth/register', { name, email, password });
-      login(response.data.user, response.data.token);
+      login(response.data.user, response.data.accessToken, response.data.refreshToken);
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to register');

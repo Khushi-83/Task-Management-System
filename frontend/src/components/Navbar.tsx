@@ -20,6 +20,10 @@ export const Navbar: React.FC = () => {
       
       {isAuthenticated && user ? (
         <div className="flex items-center gap-5">
+          <div className="hidden md:flex items-center gap-6 mr-2">
+            <Link to="/" className="text-sm font-bold text-slate-600 hover:text-primary-600 transition-colors">Dashboard</Link>
+            <Link to="/analytics" className="text-sm font-bold text-slate-600 hover:text-primary-600 transition-colors">Analytics</Link>
+          </div>
           <div className="flex items-center gap-3 bg-white/50 py-1.5 px-3 rounded-full border border-white/60 shadow-sm backdrop-blur-sm">
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold uppercase text-xs shadow-inner">
               {user.name.charAt(0)}

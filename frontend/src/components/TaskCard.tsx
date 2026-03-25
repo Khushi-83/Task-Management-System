@@ -4,7 +4,9 @@ export interface TaskProps {
   id: string;
   title: string;
   description?: string;
-  status: 'TODO' | 'IN_PROGRESS' | 'DONE';
+  status: 'Pending' | 'Completed' | 'Archived';
+  priority?: 'Low' | 'Medium' | 'High';
+  due_date?: string | null;
   createdAt: string;
 }
 
@@ -14,9 +16,15 @@ export const TaskCard: React.FC<{
   onDelete?: (id: string) => void;
 }> = ({ task, onEdit, onDelete }) => {
   const statusColors = {
-    TODO: 'bg-slate-100/80 text-slate-700 border-slate-200/60',
-    IN_PROGRESS: 'bg-indigo-50/80 text-indigo-700 border-indigo-200/60',
-    DONE: 'bg-emerald-50/80 text-emerald-700 border-emerald-200/60',
+    Pending: 'bg-slate-100/80 text-slate-700 border-slate-200/60',
+    Completed: 'bg-emerald-50/80 text-emerald-700 border-emerald-200/60',
+    Archived: 'bg-amber-50/80 text-amber-700 border-amber-200/60',
+  };
+
+  const priorityColors = {
+    Low: 'bg-blue-50 text-blue-600 border-blue-100',
+    Medium: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+    High: 'bg-rose-50 text-rose-600 border-rose-100',
   };
 
   return (
@@ -28,10 +36,18 @@ export const TaskCard: React.FC<{
         <h3 className="font-bold text-slate-800 leading-snug group-hover:text-primary-600 transition-colors">
           {task.title}
         </h3>
-        <span className={`text-[11px] px-3 py-1 rounded-full font-bold border ${statusColors[task.status]} whitespace-nowrap tracking-wide uppercase shadow-sm`}>
-          {task.status.replace('_', ' ')}
+        <span className={`text-[11px] px-3 py-1 rounded-full font-bold border ${statusColors[task.status] || statusColors.Pending} whitespace-nowrap tracking-wide uppercase shadow-sm`}>
+          {task.status}
         </span>
       </div>
+      
+      {task.priority && (
+        <div className="flex">
+          <span className={`text-[10px] px-2 py-0.5 rounded font-bold border ${priorityColors[task.priority] || priorityColors.Medium} uppercase`}>
+            {task.priority} Priority
+          </span>
+        </div>
+      )}
       
       {task.description && (
         <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed font-medium">{task.description}</p>
