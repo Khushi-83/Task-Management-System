@@ -8,33 +8,65 @@ export interface TaskProps {
   createdAt: string;
 }
 
-export const TaskCard: React.FC<{ task: TaskProps }> = ({ task }) => {
+export const TaskCard: React.FC<{ 
+  task: TaskProps;
+  onEdit?: (task: TaskProps) => void;
+  onDelete?: (id: string) => void;
+}> = ({ task, onEdit, onDelete }) => {
   const statusColors = {
-    TODO: 'bg-gray-100 text-gray-800 border-gray-200',
-    IN_PROGRESS: 'bg-blue-50 text-blue-700 border-blue-200',
-    DONE: 'bg-green-50 text-green-700 border-green-200',
+    TODO: 'bg-slate-100/80 text-slate-700 border-slate-200/60',
+    IN_PROGRESS: 'bg-indigo-50/80 text-indigo-700 border-indigo-200/60',
+    DONE: 'bg-emerald-50/80 text-emerald-700 border-emerald-200/60',
   };
 
   return (
-    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col gap-3 group">
+    <div className="glass-card p-5 rounded-2xl hover:-translate-y-1 hover:shadow-xl transition-all duration-300 flex flex-col gap-3 group relative overflow-hidden">
+      {/* Subtle top glare effect */}
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-70"></div>
+      
       <div className="flex justify-between items-start gap-4">
-        <h3 className="font-semibold text-gray-900 leading-tight group-hover:text-primary-600 transition-colors">
+        <h3 className="font-bold text-slate-800 leading-snug group-hover:text-primary-600 transition-colors">
           {task.title}
         </h3>
-        <span className={`text-xs px-2.5 py-1 rounded-full font-medium border ${statusColors[task.status]} whitespace-nowrap`}>
+        <span className={`text-[11px] px-3 py-1 rounded-full font-bold border ${statusColors[task.status]} whitespace-nowrap tracking-wide uppercase shadow-sm`}>
           {task.status.replace('_', ' ')}
         </span>
       </div>
       
       {task.description && (
-        <p className="text-sm text-gray-500 line-clamp-2">{task.description}</p>
+        <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed font-medium">{task.description}</p>
       )}
       
-      <div className="mt-auto pt-4 flex justify-between items-center text-xs text-gray-400">
-        <span>{new Date(task.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button className="hover:text-primary-600 p-1">Edit</button>
-          <button className="hover:text-red-600 p-1">Delete</button>
+      <div className="mt-auto pt-5 flex justify-between items-center text-xs text-slate-400 font-medium border-t border-slate-100/50">
+        <span className="flex items-center gap-1.5">
+          <svg className="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          {new Date(task.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+        </span>
+        <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity translate-x-2 group-hover:translate-x-0 duration-200">
+          {onEdit && (
+            <button 
+              onClick={() => onEdit(task)} 
+              className="hover:bg-primary-50 text-primary-600 hover:text-primary-700 p-1.5 rounded-md transition-colors shadow-sm bg-white/50 border border-primary-100"
+              aria-label="Edit task"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+          )}
+          {onDelete && (
+            <button 
+              onClick={() => onDelete(task.id)} 
+              className="hover:bg-red-50 text-red-500 hover:text-red-700 p-1.5 rounded-md transition-colors shadow-sm bg-white/50 border border-red-100"
+              aria-label="Delete task"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
     </div>

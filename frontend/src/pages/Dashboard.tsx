@@ -1,32 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TaskCard } from '../components/TaskCard';
 import type { TaskProps } from '../components/TaskCard';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { TaskForm } from '../components/TaskForm';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-
-// Mock Data
-const MOCK_TASKS: TaskProps[] = [
-  { id: '1', title: 'Design Database Schema', status: 'DONE', createdAt: '2026-03-20T10:00:00Z', description: 'Create Prisma schema and run migrations' },
-  { id: '2', title: 'Build UI Components', status: 'IN_PROGRESS', createdAt: '2026-03-24T14:30:00Z', description: 'Create Navbar, Button, and Input' },
-  { id: '3', title: 'Implement Auth API', status: 'TODO', createdAt: '2026-03-25T09:15:00Z', description: 'JWT endpoints for login/register' },
-];
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { getTasks, createTask, updateTask, deleteTask } from '../api/tasks';
+import type { TaskData } from '../api/tasks';
 
 export const Dashboard: React.FC = () => {
-  const [tasks, setTasks] = useState<TaskProps[]>(MOCK_TASKS);
+  const [tasks, setTasks] = useState<TaskProps[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<TaskProps | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleCreateTask = (taskData: any) => {
-    const newTask: TaskProps = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: taskData.title,
-      description: taskData.description,
-      status: taskData.status,
-      createdAt: new Date().toISOString(),
-    };
-    setTasks([newTask, ...tasks]);
-    setIsModalOpen(false);
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const fetchTasks = async () => {
+    try {
+      const data = await getTasks();
+      setTasks(data);
+    } catch (error) {
+      console.error('Failed to fetch tasks', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOpenCreateModal = () => {
+    setEditingTask(undefined);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (task: TaskProps) => {
+    setEditingTask(task);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteTask = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this task?')) return;
+    try {
+      await deleteTask(id);
+      setTasks(tasks.filter(t => t.id !== id));
+    } catch (error) {
+      console.error('Failed to delete task', error);
+    }
+  };
+
+  const handleSubmitTask = async (taskData: TaskData) => {
+    try {
+      if (editingTask) {
+        const updated = await updateTask(editingTask.id, taskData);
+        setTasks(tasks.map(t => (t.id === editingTask.id ? { ...t, ...updated } : t)));
+      } else {
+        const newTask = await createTask(taskData);
+        setTasks([newTask, ...tasks]);
+      }
+      setIsModalOpen(false);
+      setEditingTask(undefined);
+    } catch (error) {
+      console.error('Failed to save task', error);
+    }
   };
 
   const todoTasks = tasks.filter(t => t.status === 'TODO');
@@ -34,10 +70,14 @@ export const Dashboard: React.FC = () => {
   const doneTasks = tasks.filter(t => t.status === 'DONE');
 
   const chartData = [
-    { name: 'To Do', value: todoTasks.length, color: '#f3f4f6' }, // gray-100
-    { name: 'In Progress', value: inProgressTasks.length, color: '#dbeafe' }, // blue-100
-    { name: 'Done', value: doneTasks.length, color: '#dcfce3' }, // green-100
+    { name: 'To Do', value: todoTasks.length, color: '#94a3b8' },
+    { name: 'In Progress', value: inProgressTasks.length, color: '#8b5cf6' },
+    { name: 'Done', value: doneTasks.length, color: '#10b981' },
   ].filter(d => d.value > 0);
+
+  if (isLoading) {
+    return <div className="flex h-64 items-center justify-center text-gray-500">Loading tasks...</div>;
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -47,76 +87,107 @@ export const Dashboard: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Dashboard</h2>
           <p className="text-gray-500 text-sm mt-1">Overview of your tasks and progress.</p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>+ New Task</Button>
+        <Button onClick={handleOpenCreateModal}>+ New Task</Button>
       </div>
 
       {/* Analytics Section */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 md:col-span-3 flex justify-around items-center">
-            <div className="text-center">
-              <div className="text-4xl font-black text-gray-900">{tasks.length}</div>
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-2">Total Tasks</div>
+        <div className="glass-card p-6 rounded-3xl md:col-span-3 flex justify-around items-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/40 to-white/5 z-0"></div>
+          <div className="relative z-10 w-full flex justify-around items-center">
+            <div className="text-center transition-transform hover:scale-105 duration-300">
+              <div className="text-5xl font-extrabold text-slate-800 drop-shadow-sm">{tasks.length}</div>
+              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-2">Total Tasks</div>
             </div>
-            <div className="w-px h-12 bg-gray-100 hidden md:block"></div>
-            <div className="text-center">
-              <div className="text-4xl font-black text-green-600">{doneTasks.length}</div>
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-2">Completed</div>
+            <div className="w-px h-16 bg-slate-200/60 hidden md:block"></div>
+            <div className="text-center transition-transform hover:scale-105 duration-300">
+              <div className="text-5xl font-extrabold text-emerald-500 drop-shadow-sm">{doneTasks.length}</div>
+              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-2">Completed</div>
             </div>
-            <div className="w-px h-12 bg-gray-100 hidden md:block"></div>
-            <div className="text-center">
-              <div className="text-4xl font-black text-blue-600">{inProgressTasks.length}</div>
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-2">In Progress</div>
+            <div className="w-px h-16 bg-slate-200/60 hidden md:block"></div>
+            <div className="text-center transition-transform hover:scale-105 duration-300">
+              <div className="text-5xl font-extrabold text-primary-500 drop-shadow-sm">{inProgressTasks.length}</div>
+              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-2">In Progress</div>
             </div>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center items-center h-full min-h-[140px]">
+        <div className="glass-card p-5 rounded-3xl flex flex-col justify-center items-center h-full min-h-[160px] relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/10 z-0"></div>
+          <div className="relative z-10 w-full h-full -mb-2 mt-1">
           {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={120}>
+            <ResponsiveContainer width="100%" height={150}>
               <PieChart>
-                <Pie data={chartData} innerRadius={35} outerRadius={50} dataKey="value" stroke="none">
+                <Pie 
+                  data={chartData} 
+                  innerRadius={38} 
+                  outerRadius={58} 
+                  paddingAngle={6} 
+                  dataKey="value" 
+                  stroke="none"
+                  cornerRadius={6}
+                >
                   {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell key={`cell-${index}`} fill={entry.color} style={{ filter: `drop-shadow(0px 4px 8px ${entry.color}60)` }} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #f3f4f6', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '16px', border: '1px solid rgba(255,255,255,0.8)', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)', background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(12px)' }}
+                  itemStyle={{ fontWeight: 700, color: '#1e293b' }} 
+                />
+                <Legend verticalAlign="bottom" height={28} iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px', fontWeight: 600, color: '#64748b' }} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="text-sm text-gray-400">No data</div>
+            <div className="text-sm text-slate-400 font-medium h-full flex items-center justify-center">No data yet</div>
           )}
+          </div>
         </div>
       </div>
 
       {/* Kanban Board */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
         {/* TO DO Column */}
-        <div className="bg-gray-50/80 rounded-2xl p-4 border border-gray-100/50">
-          <h3 className="font-bold text-gray-700 mb-4 flex items-center justify-between">
-            To Do <span className="bg-white shadow-sm border border-gray-200 text-gray-700 text-xs py-0.5 px-2.5 rounded-full">{todoTasks.length}</span>
+        <div className="task-column rounded-3xl p-5 shadow-sm border-t-4 border-t-slate-300">
+          <h3 className="font-extrabold text-slate-800 mb-5 flex items-center justify-between uppercase tracking-wide text-sm">
+            To Do <span className="bg-white/80 shadow-sm border border-slate-200/60 text-slate-700 text-xs py-0.5 px-3 rounded-full">{todoTasks.length}</span>
           </h3>
           <div className="space-y-3">
-            {todoTasks.map(task => <TaskCard key={task.id} task={task} />)}
-            {todoTasks.length === 0 && <p className="text-sm text-gray-400 text-center py-6 border-2 border-dashed border-gray-200 rounded-xl">No tasks here</p>}
+            {todoTasks.map(task => <TaskCard key={task.id} task={task} onEdit={handleOpenEditModal} onDelete={handleDeleteTask} />)}
+            {todoTasks.length === 0 && (
+              <button 
+                onClick={handleOpenCreateModal}
+                className="w-full py-8 flex flex-col items-center justify-center border-2 border-dashed border-slate-300/70 rounded-2xl text-slate-400 hover:text-primary-600 hover:border-primary-300 hover:bg-white/60 transition-all group shadow-sm"
+              >
+                <div className="w-10 h-10 rounded-full bg-slate-100/80 group-hover:bg-primary-50 flex items-center justify-center mb-3 transition-colors shadow-sm">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </div>
+                <span className="font-bold text-sm">Add New Task</span>
+                <span className="text-xs text-slate-400 mt-1 font-medium">Get started on your goals</span>
+              </button>
+            )}
           </div>
         </div>
 
         {/* IN PROGRESS Column */}
-        <div className="bg-blue-50/30 rounded-2xl p-4 border border-blue-100/30">
-          <h3 className="font-bold text-blue-800 mb-4 flex items-center justify-between">
-            In Progress <span className="bg-white shadow-sm border border-blue-200 text-blue-700 text-xs py-0.5 px-2.5 rounded-full">{inProgressTasks.length}</span>
+        <div className="task-column rounded-3xl p-5 shadow-sm border-t-4 border-t-indigo-400">
+          <h3 className="font-extrabold text-indigo-900 mb-5 flex items-center justify-between uppercase tracking-wide text-sm">
+            In Progress <span className="bg-white/80 shadow-sm border border-indigo-200/60 text-indigo-700 text-xs py-0.5 px-3 rounded-full">{inProgressTasks.length}</span>
           </h3>
           <div className="space-y-3">
-            {inProgressTasks.map(task => <TaskCard key={task.id} task={task} />)}
+            {inProgressTasks.map(task => <TaskCard key={task.id} task={task} onEdit={handleOpenEditModal} onDelete={handleDeleteTask} />)}
             {inProgressTasks.length === 0 && <p className="text-sm text-blue-300 text-center py-6 border-2 border-dashed border-blue-100 rounded-xl">No tasks here</p>}
           </div>
         </div>
 
         {/* DONE Column */}
-        <div className="bg-green-50/30 rounded-2xl p-4 border border-green-100/30">
-          <h3 className="font-bold text-green-800 mb-4 flex items-center justify-between">
-            Done <span className="bg-white shadow-sm border border-green-200 text-green-700 text-xs py-0.5 px-2.5 rounded-full">{doneTasks.length}</span>
+        <div className="task-column rounded-3xl p-5 shadow-sm border-t-4 border-t-emerald-400">
+          <h3 className="font-extrabold text-emerald-900 mb-5 flex items-center justify-between uppercase tracking-wide text-sm">
+            Done <span className="bg-white/80 shadow-sm border border-emerald-200/60 text-emerald-700 text-xs py-0.5 px-3 rounded-full">{doneTasks.length}</span>
           </h3>
           <div className="space-y-3">
-            {doneTasks.map(task => <TaskCard key={task.id} task={task} />)}
+            {doneTasks.map(task => <TaskCard key={task.id} task={task} onEdit={handleOpenEditModal} onDelete={handleDeleteTask} />)}
             {doneTasks.length === 0 && <p className="text-sm text-green-300 text-center py-6 border-2 border-dashed border-green-100 rounded-xl">No tasks here</p>}
           </div>
         </div>
@@ -125,10 +196,12 @@ export const Dashboard: React.FC = () => {
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title="Create New Task"
+        title={editingTask ? "Edit Task" : "Create New Task"}
       >
         <TaskForm 
-          onSubmit={handleCreateTask} 
+          key={editingTask ? editingTask.id : 'new'}
+          initialData={editingTask}
+          onSubmit={handleSubmitTask} 
           onCancel={() => setIsModalOpen(false)} 
         />
       </Modal>
